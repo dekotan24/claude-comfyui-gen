@@ -1,6 +1,7 @@
 # Claude ComfyUI Gen
 
-ComfyUI API を使って SDXL 画像をプログラマティックに生成するツール。ワークフローファイル不要、Python コードで動的にノードグラフを構築します。[Claude Code](https://claude.com/claude-code) スキルとして日本語での画像生成にも対応。
+claude codeからComfyUIのAPIを叩いて画像を生成するスキル。
+「○○の画像を作って」等でComfyUI経由で画像の生成が可能です。
 
 **[English README](README_en.md)**
 
