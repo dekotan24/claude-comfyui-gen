@@ -1,0 +1,48 @@
+{
+  "comfyui": {
+    "host": "127.0.0.1",
+    "port": 8188
+  },
+  "paths": {
+    "output_dir": "<YOUR_OUTPUT_DIR>",
+    "lora_dir": "<YOUR_LORA_DIR>",
+    "checkpoint_dir": "<YOUR_CHECKPOINT_DIR>",
+    "lora_map": "./lora_map.json"
+  },
+  "defaults": {
+    "checkpoint": "<YOUR_CHECKPOINT>.safetensors",
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "steps": 25,
+    "cfg": 7.0,
+    "clip_skip": 1,
+    "width": 1024,
+    "height": 1024,
+    "batch_count": 4,
+    "negative_prompt": "low quality, worst quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, artifacts, signature, watermark, username, blurry"
+  },
+  "face_detailer": {
+    "enabled": true,
+    "bbox_model": "bbox/face_yolov8m.pt",
+    "denoise": 0.5,
+    "guide_size": 512,
+    "max_size": 768,
+    "wildcard": "best quality, high quality face, detailed eyes",
+    "steps": 20,
+    "cfg": 7.0,
+    "bbox_threshold": 0.5,
+    "bbox_dilation": 10,
+    "bbox_crop_factor": 3.0
+  },
+  "hires_fix": {
+    "scale": 1.5,
+    "denoise": 0.55,
+    "steps": null
+  },
+  "resolutions": {
+    "square": [1024, 1024],
+    "portrait": [1024, 1536],
+    "portrait_mid": [1152, 1536],
+    "landscape": [1536, 1024]
+  }
+}
