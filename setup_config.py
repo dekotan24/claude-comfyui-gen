@@ -295,37 +295,11 @@ def interactive_setup():
 
 
 def install_skill():
-    """Install SKILL.md to ~/.claude/skills/comfyui-gen/ with path substitution."""
+    """Install SKILL.md to ~/.claude/skills/comfyui-gen/."""
     template_path = SCRIPT_DIR / "skill" / "SKILL.md"
     if not template_path.exists():
         print(f"Error: {template_path} not found.", file=sys.stderr)
         sys.exit(1)
-
-    # Load config for path substitution
-    config_path = SCRIPT_DIR / "config.json"
-    if not config_path.exists():
-        print("Error: config.json not found. Run setup first.", file=sys.stderr)
-        sys.exit(1)
-
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = json.load(f)
-
-    # Determine Python executable path
-    python_exe = sys.executable
-
-    # Read template
-    with open(template_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    # Substitute placeholders
-    replacements = {
-        "{{PYTHON_EXE}}": python_exe,
-        "{{SCRIPT_DIR}}": str(SCRIPT_DIR),
-        "{{OUTPUT_DIR}}": config.get("paths", {}).get("output_dir", str(SCRIPT_DIR / "output")),
-        "{{LORA_MAP_PATH}}": config.get("paths", {}).get("lora_map", str(SCRIPT_DIR / "lora_map.json")),
-    }
-    for placeholder, value in replacements.items():
-        content = content.replace(placeholder, value)
 
     # Install to ~/.claude/skills/comfyui-gen/
     home = Path.home()
@@ -333,8 +307,7 @@ def install_skill():
     skill_dir.mkdir(parents=True, exist_ok=True)
     skill_path = skill_dir / "SKILL.md"
 
-    with open(skill_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    shutil.copy2(template_path, skill_path)
 
     print(f"Skill installed: {skill_path}")
     print("Claude Code will now use this skill for image generation requests.")
