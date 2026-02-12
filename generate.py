@@ -141,7 +141,7 @@ def build_workflow(
     sampler_name="euler_ancestral",
     scheduler="normal",
     clip_skip=1,
-    checkpoint="waiIllustriousSDXL_v150.safetensors",
+    checkpoint="sd_xl_base_1.0.safetensors",
     loras=None,
     face_detailer=True,
     face_detailer_config=None,
@@ -610,7 +610,7 @@ def generate_batch(
     if clip_skip is None:
         clip_skip = defaults.get("clip_skip", 1)
     if checkpoint is None:
-        checkpoint = defaults.get("checkpoint", "waiIllustriousSDXL_v150.safetensors")
+        checkpoint = defaults.get("checkpoint", "sd_xl_base_1.0.safetensors")
     if face_detailer is None:
         face_detailer = config.get("face_detailer", {}).get("enabled", True)
     if batch_count is None:
