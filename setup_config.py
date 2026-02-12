@@ -272,13 +272,25 @@ def interactive_setup():
             else:
                 print("  scan_loras.py not found, skipping.")
 
+    # Create output directory if it doesn't exist
+    output_path = Path(output_dir)
+    if not output_path.exists():
+        try:
+            output_path.mkdir(parents=True, exist_ok=True)
+            print(f"  Created output directory: {output_dir}")
+        except OSError as e:
+            print(f"  Warning: Could not create output directory: {e}")
+
+    # Offer to install Claude Code skill
+    install = prompt_input("\n  Install Claude Code skill? (y/n)", "y")
+    if install.lower() in ("y", "yes"):
+        install_skill()
+
     print("\n" + "=" * 60)
     print("  Setup complete!")
     print("=" * 60)
     print(f"\n  To generate images:")
-    print(f'    python generate.py --prompt "1girl, smile" --count 1')
-    print(f"\n  To install Claude Code skill:")
-    print(f"    python setup_config.py --install-skill")
+    print(f'    python generate.py --prompt "masterpiece, best quality, 1girl, smile" --count 1')
     print()
 
 

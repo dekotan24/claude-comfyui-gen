@@ -27,7 +27,7 @@ Generate SDXL images programmatically through ComfyUI's API — no workflow file
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-comfyui-gen.git
+git clone https://github.com/dekotan24/claude-comfyui-gen.git
 cd claude-comfyui-gen
 python -m venv .venv
 
@@ -46,12 +46,20 @@ The setup wizard will:
 2. Configure output, LoRA, and checkpoint directories
 3. Let you select your default checkpoint model
 4. Test the ComfyUI API connection
+5. Scan LoRA metadata (if LoRAs exist)
+6. Install the Claude Code skill
+
+That's it — you're ready to generate images.
 
 ### Manual Setup
 
+If you prefer manual configuration:
+
 ```bash
 copy config.example.json config.json
-# Edit config.json with your paths
+# Edit config.json with your paths, then:
+python scan_loras.py              # Build LoRA index (optional)
+python setup_config.py --install-skill  # Install Claude Code skill (optional)
 ```
 
 ## Usage
@@ -80,7 +88,7 @@ python generate.py --prompt "masterpiece, best quality, 1girl" --json
 
 ### Claude Code Skill
 
-Install the Claude Code skill for natural language image generation:
+The Claude Code skill is installed automatically during `setup_config.py`. To install/reinstall manually:
 
 ```bash
 python setup_config.py --install-skill

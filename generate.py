@@ -632,6 +632,7 @@ def generate_batch(
         filename_prefix = f"gen_{ts}"
 
     output_dir = config.get("paths", {}).get("output_dir", str(SCRIPT_DIR / "output"))
+    os.makedirs(output_dir, exist_ok=True)
     fd_config = config.get("face_detailer", {})
 
     # Check server
