@@ -76,10 +76,9 @@ def load_config():
         "face_detailer": {"enabled": True},
         "resolutions": {
             "square": [1024, 1024],
-            "portrait": [896, 1152],
-            "portrait_tall": [768, 1344],
-            "landscape": [1152, 896],
-            "landscape_wide": [1344, 768],
+            "portrait": [1024, 1536],
+            "portrait_mid": [1152, 1536],
+            "landscape": [1536, 1024],
         },
     }
 

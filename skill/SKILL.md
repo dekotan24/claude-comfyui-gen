@@ -11,12 +11,11 @@ description: ComfyUI APIを使ったSDXL画像生成スキル。ユーザーが�
 
 このスキルは `claude-comfyui-gen` プロジェクトを使用する。以下の手順でプロジェクトディレクトリを特定する:
 
-1. `config.json` の `_project_dir` キーが存在すればそのパスを使用
-2. 存在しなければ、以下の順で `generate.py` を検索:
+1. 以下の順で `generate.py` が存在するディレクトリを検索:
    - カレントワーキングディレクトリ
-   - `~/Documents/app/Comfy_Ui_Code/`
    - `~/claude-comfyui-gen/`
-3. いずれも見つからなければ AskUserQuestion で「claude-comfyui-gen をクローンしたディレクトリはどこですか？」と確認
+2. いずれも見つからなければ Glob ツールで `generate.py` を広く検索
+3. それでも見つからなければ AskUserQuestion で「claude-comfyui-gen をクローンしたディレクトリはどこですか？」と確認
 
 見つかったプロジェクトディレクトリを `PROJECT_DIR` とする。
 Python実行パスは `PROJECT_DIR/.venv/Scripts/python.exe` (Windows) または `PROJECT_DIR/.venv/bin/python` (Linux/Mac)。
@@ -70,65 +69,60 @@ checkpoint_dir 内の `.safetensors` ファイルを一覧表示し、AskUserQue
 
 ### Step 4: config.json 生成
 
-Bashで以下を実行して config.json を生成:
-```bash
-python -c "
-import json
-config = {
-    'comfyui': {'host': '127.0.0.1', 'port': 8188},
-    'paths': {
-        'output_dir': 'OUTPUT_DIR_HERE',
-        'lora_dir': 'LORA_DIR_HERE',
-        'checkpoint_dir': 'CHECKPOINT_DIR_HERE',
-        'lora_map': './lora_map.json'
-    },
-    'defaults': {
-        'checkpoint': 'CHECKPOINT_NAME_HERE',
-        'sampler': 'euler_ancestral',
-        'scheduler': 'normal',
-        'steps': 25,
-        'cfg': 7.0,
-        'clip_skip': 1,
-        'width': 1024,
-        'height': 1024,
-        'batch_count': 4,
-        'negative_prompt': 'low quality, worst quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, artifacts, signature, watermark, username, blurry'
-    },
-    'face_detailer': {
-        'enabled': True,
-        'bbox_model': 'bbox/face_yolov8m.pt',
-        'denoise': 0.5,
-        'guide_size': 512,
-        'max_size': 768,
-        'wildcard': 'best quality, high quality face, detailed eyes',
-        'steps': 20,
-        'cfg': 7.0,
-        'bbox_threshold': 0.5,
-        'bbox_dilation': 10,
-        'bbox_crop_factor': 3.0
-    },
-    'hires_fix': {'scale': 1.5, 'denoise': 0.55, 'steps': None},
-    'resolutions': {
-        'square': [1024, 1024],
-        'portrait': [1024, 1536],
-        'portrait_mid': [1152, 1536],
-        'landscape': [1536, 1024]
-    }
-}
-with open('PROJECT_DIR/config.json', 'w') as f:
-    json.dump(config, f, indent=2, ensure_ascii=False)
-print('OK')
-"
-```
+Write ツールを使って `PROJECT_DIR/config.json` を直接作成する。以下のJSON構造で、各パスにはStep 1-3で確定した実際の値を入れる:
 
-上記のプレースホルダー（OUTPUT_DIR_HERE等）を実際の値に置換してから実行する。
+```json
+{
+  "comfyui": {"host": "127.0.0.1", "port": 8188},
+  "paths": {
+    "output_dir": "（Step 2で確定した出力先）",
+    "lora_dir": "（Step 2で確定したLoRAディレクトリ）",
+    "checkpoint_dir": "（Step 2で確定したcheckpointディレクトリ）",
+    "lora_map": "./lora_map.json"
+  },
+  "defaults": {
+    "checkpoint": "（Step 3で選択したモデル名）",
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "steps": 25,
+    "cfg": 7.0,
+    "clip_skip": 1,
+    "width": 1024,
+    "height": 1024,
+    "batch_count": 4,
+    "negative_prompt": "low quality, worst quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, artifacts, signature, watermark, username, blurry"
+  },
+  "face_detailer": {
+    "enabled": true,
+    "bbox_model": "bbox/face_yolov8m.pt",
+    "denoise": 0.5,
+    "guide_size": 512,
+    "max_size": 768,
+    "wildcard": "best quality, high quality face, detailed eyes",
+    "steps": 20,
+    "cfg": 7.0,
+    "bbox_threshold": 0.5,
+    "bbox_dilation": 10,
+    "bbox_crop_factor": 3.0
+  },
+  "hires_fix": {"scale": 1.5, "denoise": 0.55, "steps": null},
+  "resolutions": {
+    "square": [1024, 1024],
+    "portrait": [1024, 1536],
+    "portrait_mid": [1152, 1536],
+    "landscape": [1536, 1024]
+  }
+}
+```
 
 ### Step 5: venv & 依存パッケージ（未セットアップの場合）
 
-PROJECT_DIR に `.venv` が存在しない場合:
+PROJECT_DIR に `.venv` が存在しない場合、Bashで:
 ```bash
-cd PROJECT_DIR && python -m venv .venv && .venv/Scripts/pip install Pillow websocket-client
+python -m venv "PROJECT_DIR/.venv"
+"PROJECT_DIR/.venv/Scripts/python.exe" -m pip install Pillow websocket-client
 ```
+（Linux/Macの場合は `.venv/bin/python` に読み替える）
 
 ### Step 6: LoRA スキャン
 
