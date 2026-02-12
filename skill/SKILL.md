@@ -7,37 +7,140 @@ description: ComfyUI APIを使ったSDXL画像生成スキル。ユーザーが�
 
 ユーザーの日本語指示からSDXL向け英語プロンプトを生成し、ComfyUI APIで画像を生成する。
 
-## 初回セットアップ
+## プロジェクトの検出
 
-**config.json が存在しない場合、以下の手順でセットアップを補助する:**
+このスキルは `claude-comfyui-gen` プロジェクトを使用する。以下の手順でプロジェクトディレクトリを特定する:
 
-1. AskUserQuestion で以下を確認:
-   - 「Stability Matrixのインストール先はどこですか？（例: C:/StabilityMatrix, D:/StabilityMatrix 等）」
-   - 「画像の出力先フォルダはどこにしますか？（例: D:/images/output）」
-   - 「LoRAフォルダのパスは？（Stability Matrixの場合は通常 <SM_ROOT>/Data/Models/Lora）」
+1. `config.json` の `_project_dir` キーが存在すればそのパスを使用
+2. 存在しなければ、以下の順で `generate.py` を検索:
+   - カレントワーキングディレクトリ
+   - `~/Documents/app/Comfy_Ui_Code/`
+   - `~/claude-comfyui-gen/`
+3. いずれも見つからなければ AskUserQuestion で「claude-comfyui-gen をクローンしたディレクトリはどこですか？」と確認
 
-2. 回答をもとに setup_config.py を実行:
+見つかったプロジェクトディレクトリを `PROJECT_DIR` とする。
+Python実行パスは `PROJECT_DIR/.venv/Scripts/python.exe` (Windows) または `PROJECT_DIR/.venv/bin/python` (Linux/Mac)。
+venvが存在しない場合はシステムの `python` を使用する。
+
+## 初回セットアップ（config.json が無い場合）
+
+`PROJECT_DIR/config.json` が存在しない場合、画像生成の前にセットアップを実行する。
+
+### Step 1: Stability Matrix の検出
+
+Bashで以下を実行して自動検出:
 ```bash
-"{{PYTHON_EXE}}" "{{SCRIPT_DIR}}/setup_config.py" --non-interactive
+python -c "
+import sys, string, json
+from pathlib import Path
+candidates = []
+if sys.platform == 'win32':
+    for d in string.ascii_uppercase:
+        p = Path(f'{d}:/')
+        if not p.exists(): continue
+        try:
+            for item in p.iterdir():
+                if item.is_dir():
+                    try:
+                        if (item/'Data'/'StabilityMatrix.db').exists() or (item/'Data'/'Models'/'StableDiffusion').exists():
+                            candidates.append(str(item))
+                    except: pass
+        except: pass
+print(json.dumps(candidates))
+"
 ```
 
-3. 生成された config.json を回答内容で書き換える（Bashツールで python -c を使ってJSONを更新）
+- 見つかった場合: そのパスを使用するか AskUserQuestion で確認
+- 見つからない場合: AskUserQuestion で「Stability Matrixのインストール先を教えてください」
 
-4. LoRAを使用する場合はスキャンを実行:
+### Step 2: パスの構成
+
+Stability Matrix のルートが `SM_ROOT` として:
+- **output_dir**: `SM_ROOT/Data/Images/Text2Img` （無ければ `SM_ROOT/Data/Images`、または任意のパス）
+- **lora_dir**: `SM_ROOT/Data/Models/Lora`
+- **checkpoint_dir**: `SM_ROOT/Data/Models/StableDiffusion`
+
+AskUserQuestion で以下を確認:
+- 「画像の出力先はデフォルト（SM_ROOT/Data/Images/Text2Img）でいいですか？」
+- 出力先のパスが存在しない場合は自動作成
+
+### Step 3: チェックポイント選択
+
+checkpoint_dir 内の `.safetensors` ファイルを一覧表示し、AskUserQuestion でデフォルトモデルを選択させる。
+
+### Step 4: config.json 生成
+
+Bashで以下を実行して config.json を生成:
 ```bash
-"{{PYTHON_EXE}}" "{{SCRIPT_DIR}}/scan_loras.py"
+python -c "
+import json
+config = {
+    'comfyui': {'host': '127.0.0.1', 'port': 8188},
+    'paths': {
+        'output_dir': 'OUTPUT_DIR_HERE',
+        'lora_dir': 'LORA_DIR_HERE',
+        'checkpoint_dir': 'CHECKPOINT_DIR_HERE',
+        'lora_map': './lora_map.json'
+    },
+    'defaults': {
+        'checkpoint': 'CHECKPOINT_NAME_HERE',
+        'sampler': 'euler_ancestral',
+        'scheduler': 'normal',
+        'steps': 25,
+        'cfg': 7.0,
+        'clip_skip': 1,
+        'width': 1024,
+        'height': 1024,
+        'batch_count': 4,
+        'negative_prompt': 'low quality, worst quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, artifacts, signature, watermark, username, blurry'
+    },
+    'face_detailer': {
+        'enabled': True,
+        'bbox_model': 'bbox/face_yolov8m.pt',
+        'denoise': 0.5,
+        'guide_size': 512,
+        'max_size': 768,
+        'wildcard': 'best quality, high quality face, detailed eyes',
+        'steps': 20,
+        'cfg': 7.0,
+        'bbox_threshold': 0.5,
+        'bbox_dilation': 10,
+        'bbox_crop_factor': 3.0
+    },
+    'hires_fix': {'scale': 1.5, 'denoise': 0.55, 'steps': None},
+    'resolutions': {
+        'square': [1024, 1024],
+        'portrait': [1024, 1536],
+        'portrait_mid': [1152, 1536],
+        'landscape': [1536, 1024]
+    }
+}
+with open('PROJECT_DIR/config.json', 'w') as f:
+    json.dump(config, f, indent=2, ensure_ascii=False)
+print('OK')
+"
 ```
 
-5. セットアップ完了を報告し、通常の画像生成フローへ移行
+上記のプレースホルダー（OUTPUT_DIR_HERE等）を実際の値に置換してから実行する。
 
-## 実行環境
+### Step 5: venv & 依存パッケージ（未セットアップの場合）
 
-- **Python**: `{{PYTHON_EXE}}`
-- **スクリプト**: `{{SCRIPT_DIR}}/generate.py`
-- **設定**: `{{SCRIPT_DIR}}/config.json`
-- **LoRAマップ**: `{{LORA_MAP_PATH}}`
-- **出力先**: `{{OUTPUT_DIR}}`
-- **前提条件**: ComfyUIが起動済みであること
+PROJECT_DIR に `.venv` が存在しない場合:
+```bash
+cd PROJECT_DIR && python -m venv .venv && .venv/Scripts/pip install Pillow websocket-client
+```
+
+### Step 6: LoRA スキャン
+
+lora_dir が存在し、`.cm-info.json` ファイルがある場合:
+```bash
+"PROJECT_DIR/.venv/Scripts/python.exe" "PROJECT_DIR/scan_loras.py"
+```
+
+### Step 7: セットアップ完了
+
+「セットアップが完了しました。画像生成の準備ができています。」と報告。
+ユーザーが元々画像生成を依頼していた場合は、そのまま続けて画像生成フローへ移行する。
 
 ## 処理フロー
 
@@ -163,11 +266,11 @@ masterpiece, best quality, absurdres, highres
 
 **自動選択**: ユーザーがキャラ名を言及 → lora_map.json で検索
 
-LoRA検索コマンド:
+LoRA検索コマンド（PROJECT_DIR を実際のパスに置換して実行）:
 ```bash
-"{{PYTHON_EXE}}" -c "
+"PROJECT_DIR/.venv/Scripts/python.exe" -c "
 import json
-with open('{{LORA_MAP_PATH}}', encoding='utf-8') as f:
+with open('PROJECT_DIR/lora_map.json', encoding='utf-8') as f:
     data = json.load(f)
 search = 'SEARCH_TERM_HERE'
 results = {}
@@ -179,8 +282,6 @@ for k,v in data['search_aliases'].items():
 for k,v in list(results.items())[:5]:
     print(f'{k}: {v[\"filename\"]} | triggers: {v.get(\"trigger_words\",[])[: 3]} | base: {v.get(\"base_model\",\"\")}')"
 ```
-
-検索例: `search = 'arihara_nanami'` や `search = 'alice'`
 
 **LoRA使用時の注意:**
 - LoRAのトリガーワードを必ずポジティブプロンプトに含める
@@ -198,7 +299,7 @@ for k,v in list(results.items())[:5]:
 ### 6. 生成コマンド実行
 
 ```bash
-"{{PYTHON_EXE}}" "{{SCRIPT_DIR}}/generate.py" --prompt "masterpiece, best quality, absurdres, highres, PROMPT_HERE" --resolution RESOLUTION --steps STEPS --cfg CFG [OPTIONS] --json
+"PROJECT_DIR/.venv/Scripts/python.exe" "PROJECT_DIR/generate.py" --prompt "masterpiece, best quality, absurdres, highres, PROMPT_HERE" --resolution RESOLUTION --steps STEPS --cfg CFG [OPTIONS] --json
 ```
 
 **オプション一覧:**

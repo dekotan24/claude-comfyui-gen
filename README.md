@@ -26,6 +26,31 @@ Generate SDXL images programmatically through ComfyUI's API — no workflow file
 
 ## Installation
 
+### Quick Start (Claude Code handles everything)
+
+```bash
+git clone https://github.com/dekotan24/claude-comfyui-gen.git
+cd claude-comfyui-gen
+
+# Install the Claude Code skill (one-time)
+# Windows
+mkdir "%USERPROFILE%\.claude\skills\comfyui-gen" 2>nul
+copy skill\SKILL.md "%USERPROFILE%\.claude\skills\comfyui-gen\SKILL.md"
+
+# Linux/Mac
+# mkdir -p ~/.claude/skills/comfyui-gen
+# cp skill/SKILL.md ~/.claude/skills/comfyui-gen/SKILL.md
+```
+
+That's it. When you ask Claude Code to generate an image (e.g., "女の子を生成して"), it will automatically:
+1. Detect your Stability Matrix installation
+2. Create a virtual environment and install dependencies
+3. Configure all paths and select your checkpoint model
+4. Scan LoRA metadata
+5. Generate images
+
+### Manual Setup (without Claude Code)
+
 ```bash
 git clone https://github.com/dekotan24/claude-comfyui-gen.git
 cd claude-comfyui-gen
@@ -41,26 +66,7 @@ pip install -r requirements.txt
 python setup_config.py
 ```
 
-The setup wizard will:
-1. Auto-detect your Stability Matrix installation
-2. Configure output, LoRA, and checkpoint directories
-3. Let you select your default checkpoint model
-4. Test the ComfyUI API connection
-5. Scan LoRA metadata (if LoRAs exist)
-6. Install the Claude Code skill
-
-That's it — you're ready to generate images.
-
-### Manual Setup
-
-If you prefer manual configuration:
-
-```bash
-copy config.example.json config.json
-# Edit config.json with your paths, then:
-python scan_loras.py              # Build LoRA index (optional)
-python setup_config.py --install-skill  # Install Claude Code skill (optional)
-```
+The setup wizard will auto-detect Stability Matrix, configure paths, and get you ready to generate.
 
 ## Usage
 
@@ -88,13 +94,7 @@ python generate.py --prompt "masterpiece, best quality, 1girl" --json
 
 ### Claude Code Skill
 
-The Claude Code skill is installed automatically during `setup_config.py`. To install/reinstall manually:
-
-```bash
-python setup_config.py --install-skill
-```
-
-Then in Claude Code, just describe what you want:
+After installing the skill (see Quick Start above), Claude Code handles everything automatically — including first-time setup. Just describe what you want:
 - "女の子を1人、笑顔で立ってる絵を生成して"
 - "海辺で水着の女の子を描いて"
 - "金髪ツインテールの女の子を高画質で"
